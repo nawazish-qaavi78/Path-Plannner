@@ -160,12 +160,11 @@ int main(int argc, char const *argv[]) {
     set_graph(graph);
     
     // setting up the variables
-    #ifdef __linux__
-        uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
-        int8_t parent[V] = {[0 ... (V-1)] = -1};
-        bool processed[V] = {[0 ... (V-1)] = false};
-        cost[START_POINT] = 0;
-    #endif
+    uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
+    int8_t parent[V] = {[0 ... (V-1)] = -1};
+    bool processed[V] = {[0 ... (V-1)] = false};
+    cost[START_POINT] = 0;
+
 
 
     // starting the algo
