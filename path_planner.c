@@ -128,7 +128,7 @@ int main(int argc, char const *argv[]) {
     #endif
 
     // array to store the planned path
-    uint8_t path_planned[32];
+    uint8_t path_planned[V];
     // index to keep track of the path_planned array
     uint8_t idx = 0;
 
@@ -152,7 +152,7 @@ int main(int argc, char const *argv[]) {
     // ############# Add your code here #############
     // prefer declaring variable like this
     #ifdef __linux__
-        uint32_t graph[32];
+        uint32_t graph[V];
     #else
         uint32_t *graph = (uint32_t *) 0x02000010;
     #endif
@@ -161,7 +161,8 @@ int main(int argc, char const *argv[]) {
     
     // setting up the variables
     #ifdef __linux__
-        uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX}, parent[V] = {[0 ... (V-1)] = -1};
+        uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
+        int8_t parent[V] = {[0 ... (V-1)] = -1};
         bool processed[V] = {[0 ... (V-1)] = false};
         cost[START_POINT] = 0;
     #endif
@@ -174,12 +175,12 @@ int main(int argc, char const *argv[]) {
         parent_index = min_cost(cost, processed);
         if(parent_index>=0){
             for(index = 0; index<V; index++){
-            if(graph[parent_index] & (1<<index)){
-                if(cost[index] > cost[parent_index] + 1) {
-                    cost[index] = cost[parent_index] + 1;
-                    parent[index] = parent_index;
-                }
-                if(index == END_POINT) break; // considering all of equal weight edges
+                if(graph[parent_index] & (1<<index)){
+                    if(cost[index] > cost[parent_index] + 1) {
+                        cost[index] = cost[parent_index] + 1;
+                        parent[index] = parent_index;
+                    }
+                    if(index == END_POINT) break; // considering all of equal weight edges
                 }
             }
             processed[parent_index] = true;
@@ -196,9 +197,9 @@ int main(int argc, char const *argv[]) {
         idx++;
     }
 
-    path_planned[idx] = END_POINT;
-    for(int8_t i = idx-1; i>=0; i--){
-        path_planned[i] = parent[i+1];
+    path_planned[idx-1] = END_POINT;
+    for(int8_t i = idx-2; i>=0; i--){
+        path_planned[i] = parent[path_planned[i+1]];
     }
 
 
