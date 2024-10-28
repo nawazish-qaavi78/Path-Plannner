@@ -98,11 +98,9 @@ int min_cost(uint8_t *cost, uint32_t processed) {
     uint8_t min = UINT8_MAX;
     int8_t index = -1;
     for(uint8_t i = 0; i<V; i++){
-        if(!(processed & (1<<i))) {
-            if(cost[i]<min){
+        if((!(processed & (1<<i))) && (cost[i]<min)) {
                 index = i;
                 min = cost[i];
-            } 
         }
     }
     return index;
@@ -160,8 +158,25 @@ int main(int argc, char const *argv[]) {
     set_graph(graph);
     
     // setting up the variables
-    uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
-    int8_t parent[V] = {[0 ... (V-1)] = -1};
+    #ifdef __linux__
+        uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
+    #else
+        uint8_t *cost = (uint8_t *) 0x02000100; // Adjust memory address if needed for the device
+        for (uint8_t i = 0; i < V; i++) {
+            cost[i] = UINT8_MAX;
+        }
+    #endif
+
+    #ifdef __linux__
+        int8_t parent[V] = {[0 ... (V-1)] = -1};
+    #else
+        int8_t *parent = (int8_t *) 0x02000200; // Adjust memory address if needed for the device
+        for (uint8_t i = 0; i < V; i++) {
+            parent[i] = -1;
+        }
+    #endif
+    
+    
     cost[START_POINT] = 0;
 
     uint32_t processed = 0;
@@ -175,12 +190,10 @@ int main(int argc, char const *argv[]) {
         parent_index = min_cost(cost, processed);
         if(parent_index>=0){
             for(index = 0; index<V; index++){
-                if(graph[parent_index] & (1<<index)){
-                    if(cost[index] > cost[parent_index] + 1) {
+                if((graph[parent_index] & (1<<index)) && (cost[index] > cost[parent_index] + 1)){
                         cost[index] = cost[parent_index] + 1;
                         parent[index] = parent_index;
-                    }
-                    if(index == END_POINT) break; // considering all of equal weight edges
+                        if(index == END_POINT) break; // considering all of equal weight edges
                 }
             }
 
@@ -191,11 +204,10 @@ int main(int argc, char const *argv[]) {
     }
 
     // decoding the output
-    int8_t j = END_POINT;
-    while(j!=-1){
-        j = parent[j];
+    for (int8_t temp = END_POINT; temp != -1; temp = parent[temp]) {
         idx++;
     }
+
 
     path_planned[idx-1] = END_POINT;
     for(int8_t i = idx-2; i>=0; i--){
