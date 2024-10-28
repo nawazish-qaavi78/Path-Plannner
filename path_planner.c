@@ -94,11 +94,11 @@ void set_graph(uint32_t *graph){
     graph[31] = 0b01000000000000000000000000000000;
 }
 
-int min_cost(uint8_t *cost, bool *processed) {
+int min_cost(uint8_t *cost, uint32_t processed) {
     uint8_t min = UINT8_MAX;
     int8_t index = -1;
     for(uint8_t i = 0; i<V; i++){
-        if(!processed[i]) {
+        if(!(processed & (1<<i))) {
             if(cost[i]<min){
                 index = i;
                 min = cost[i];
@@ -162,8 +162,9 @@ int main(int argc, char const *argv[]) {
     // setting up the variables
     uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
     int8_t parent[V] = {[0 ... (V-1)] = -1};
-    bool processed[V] = {[0 ... (V-1)] = false};
     cost[START_POINT] = 0;
+
+    uint32_t processed = 0;
 
 
 
@@ -182,7 +183,8 @@ int main(int argc, char const *argv[]) {
                     if(index == END_POINT) break; // considering all of equal weight edges
                 }
             }
-            processed[parent_index] = true;
+
+            processed = processed | (1<<parent_index);
             if(index == END_POINT) break;
         }
         
@@ -190,7 +192,6 @@ int main(int argc, char const *argv[]) {
 
     // decoding the output
     int8_t j = END_POINT;
-    
     while(j!=-1){
         j = parent[j];
         idx++;
