@@ -160,28 +160,19 @@ int main(int argc, char const *argv[]) {
     // setting up the variables
     #ifdef __linux__
         uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
-    #else
-        uint8_t *cost = (uint8_t *) 0x02000100; // Adjust memory address if needed for the device
-        for (uint8_t i = 0; i < V; i++) {
-            cost[i] = UINT8_MAX;
-        }
-    #endif
-
-    #ifdef __linux__
         int8_t parent[V] = {[0 ... (V-1)] = -1};
     #else
-        int8_t *parent = (int8_t *) 0x02000200; // Adjust memory address if needed for the device
+        uint8_t *cost = (uint8_t *) 0x02000100; 
+        int8_t *parent = (int8_t *) 0x02000200; 
         for (uint8_t i = 0; i < V; i++) {
+            cost[i] = UINT8_MAX;
             parent[i] = -1;
         }
-    #endif
-    
+    #endif    
     
     cost[START_POINT] = 0;
 
     uint32_t processed = 0;
-
-
 
     // starting the algo
     for(uint8_t j = 0; j<V; j++){
@@ -204,9 +195,7 @@ int main(int argc, char const *argv[]) {
     }
 
     // decoding the output
-    for (int8_t temp = END_POINT; temp != -1; temp = parent[temp]) {
-        idx++;
-    }
+    for (int8_t temp = END_POINT; temp != -1; temp = parent[temp], idx++);
 
 
     path_planned[idx-1] = END_POINT;
