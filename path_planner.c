@@ -130,54 +130,41 @@ int main(int argc, char const *argv[]) {
     // index to keep track of the path_planned array
     uint8_t idx = 0;
 
-
-    /* Functions Usage
-
-    instead of using printf() function for debugging,
-    use the below function calls to print a number, string or a newline
-
-    for newline: _put_byte('\n');
-    for string:  _put_str("your string here");
-    for number:  _put_value(your_number_here);
-
-    Examples:
-            _put_value(START_POINT);
-            _put_value(END_POINT);
-            _put_str("Hello World!");
-            _put_byte('\n');
-    */
-
     // ############# Add your code here #############
     // prefer declaring variable like this
     #ifdef __linux__
         uint32_t graph[V];
-    #else
-        uint32_t *graph = (uint32_t *) 0x02000010;
-    #endif
-
-    set_graph(graph);
-    
-    // setting up the variables
-    #ifdef __linux__
         uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
         int8_t parent[V] = {[0 ... (V-1)] = -1};
+        uint32_t processed;
     #else
-        uint8_t *cost = (uint8_t *) 0x02000100; 
-        int8_t *parent = (int8_t *) 0x02000200; 
+        #define processed   (* (volatile uint32_t * ) 0x020000D4) 
+
+        uint32_t *graph   = (uint32_t *) 0x02000014;
+        uint8_t  *cost    = (uint8_t *)  0x0200008C; 
+        int8_t   *parent  = (int8_t *)   0x020000B8; 
+
         for (uint8_t i = 0; i < V; i++) {
             cost[i] = UINT8_MAX;
             parent[i] = -1;
         }
-    #endif    
-    
-    cost[START_POINT] = 0;
+    #endif
 
-    uint32_t processed = 0;
+    set_graph(graph);
+    processed = 0;
+    cost[START_POINT] = 0;
 
     // starting the algo
     for(uint8_t j = 0; j<V; j++){
-        uint8_t index = 0;
-        int8_t parent_index = 0;
+        #ifdef __linux__
+            uint8_t index        = 0;
+            int8_t  parent_index = 0;
+        #else
+            #define index              (* (volatile uint8_t * ) 0x020000D8)
+            #define parent_index       (* (volatile  int8_t * ) 0x020000D9)
+        #endif
+        index        = 0;
+        parent_index = 0;
         parent_index = min_cost(cost, processed);
         if(parent_index>=0){
             for(index = 0; index<V; index++){
