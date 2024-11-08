@@ -125,10 +125,17 @@ int main(int argc, char const *argv[]) {
 
     #endif
 
-    // array to store the planned path
-    uint8_t path_planned[V];
-    // index to keep track of the path_planned array
-    uint8_t idx = 0;
+    #ifdef __linux__
+        // array to store the planned path
+        uint8_t path_planned[16];
+        // index to keep track of the path_planned array
+        uint8_t idx;
+    #else
+        uint8_t  *path_planned = (uint8_t *)  0x020000D8;
+        #define idx  (* (volatile uint32_t * ) 0x020000E4) 
+    #endif
+
+    idx = 0;
 
     // ############# Add your code here #############
     // prefer declaring variable like this
@@ -156,16 +163,8 @@ int main(int argc, char const *argv[]) {
 
     // starting the algo
     for(uint8_t j = 0; j<V; j++){
-        #ifdef __linux__
-            uint8_t index        = 0;
-            int8_t  parent_index = 0;
-        #else
-            #define index              (* (volatile uint8_t * ) 0x020000D8)
-            #define parent_index       (* (volatile  int8_t * ) 0x020000D9)
-        #endif
-        index        = 0;
-        parent_index = 0;
-        parent_index = min_cost(cost, processed);
+        uint8_t index=0;
+        int8_t  parent_index = min_cost(cost, processed);
         if(parent_index>=0){
             for(index = 0; index<V; index++){
                 if((graph[parent_index] & (1<<index)) && (cost[index] > cost[parent_index] + 1)){
