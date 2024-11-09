@@ -60,16 +60,16 @@
 
 void set_graph(uint32_t *graph){
     // there are 32 bits and each bit shows if there is a linked between it and current index
-    graph[0] = 0b00000000000000000000010001000010;
-    graph[1] = 0b00000000000000000000100000000101;
-    graph[2] = 0b00000000000000000000000000111010;
-    graph[3] = 0b00000000000000000000000000000100;
-    graph[4] = 0b00000000000000000000000000000100;
-    graph[5] = 0b00000000000000000000000000000100;
-    graph[6] = 0b00000000000000000000001110000001;
-    graph[7] = 0b00000000000000000000000001000000;
-    graph[8] = 0b00000000000000000000000001000000;
-    graph[9] = 0b00000000000000000000000001000000;
+    graph[ 0] = 0b00000000000000000000010001000010;
+    graph[ 1] = 0b00000000000000000000100000000101;
+    graph[ 2] = 0b00000000000000000000000000111010;
+    graph[ 3] = 0b00000000000000000000000000000100;
+    graph[ 4] = 0b00000000000000000000000000000100;
+    graph[ 5] = 0b00000000000000000000000000000100;
+    graph[ 6] = 0b00000000000000000000001110000001;
+    graph[ 7] = 0b00000000000000000000000001000000;
+    graph[ 8] = 0b00000000000000000000000001000000;
+    graph[ 9] = 0b00000000000000000000000001000000;
     graph[10] = 0b00000101000000000000100000000001;
     graph[11] = 0b00000000000010000001010000000010;
     graph[12] = 0b00000000000000000110100000000000;
@@ -95,8 +95,8 @@ void set_graph(uint32_t *graph){
 }
 
 int min_cost(uint8_t *cost, uint32_t processed) {
-    uint8_t min = UINT8_MAX;
-    int8_t index = -1;
+    uint8_t min   = UINT8_MAX;
+    int8_t  index =        -1;
     for(uint8_t i = 0; i<V; i++){
         if((!(processed & (1<<i))) && (cost[i]<min)) {
                 index = i;
@@ -131,25 +131,23 @@ int main(int argc, char const *argv[]) {
         // index to keep track of the path_planned array
         uint8_t idx;
     #else
-        uint8_t  *path_planned = (uint8_t *)  0x020000D8;
-        #define idx  (* (volatile uint32_t * ) 0x020000E4) 
+        uint8_t  *path_planned = (uint8_t *)  0x020000D0;
+        #define idx  (* (volatile uint8_t * ) 0x020000E4) 
     #endif
-
     idx = 0;
 
     // ############# Add your code here #############
     // prefer declaring variable like this
     #ifdef __linux__
         uint32_t graph[V];
-        uint8_t cost[V] = {[0 ... (V-1)] = UINT8_MAX};
-        int8_t parent[V] = {[0 ... (V-1)] = -1};
+        uint8_t  cost[V]   =  {[0 ... (V-1)] = UINT8_MAX};
+        int8_t   parent[V] =  {[0 ... (V-1)] = -1};
         uint32_t processed;
     #else
-        #define processed   (* (volatile uint32_t * ) 0x020000D4) 
-
-        uint32_t *graph   = (uint32_t *) 0x02000014;
-        uint8_t  *cost    = (uint8_t *)  0x0200008C; 
-        int8_t   *parent  = (int8_t *)   0x020000B8; 
+        #define processed   (* (volatile uint32_t * ) 0x020000E0) 
+        uint32_t *graph   = (uint32_t *) 0x02000010;
+        uint8_t  *cost    = (uint8_t *)  0x02000090; 
+        int8_t   *parent  = (int8_t *)   0x020000B0; 
 
         for (uint8_t i = 0; i < V; i++) {
             cost[i] = UINT8_MAX;
@@ -158,12 +156,12 @@ int main(int argc, char const *argv[]) {
     #endif
 
     set_graph(graph);
-    processed = 0;
+    processed         = 0;
     cost[START_POINT] = 0;
 
     // starting the algo
     for(uint8_t j = 0; j<V; j++){
-        uint8_t index=0;
+        uint8_t index = 0;
         int8_t  parent_index = min_cost(cost, processed);
         if(parent_index>=0){
             for(index = 0; index<V; index++){
@@ -180,14 +178,20 @@ int main(int argc, char const *argv[]) {
         
     }
 
-    // decoding the output
-    for (int8_t temp = END_POINT; temp != -1; temp = parent[temp], idx++);
-
-
-    path_planned[idx-1] = END_POINT;
-    for(int8_t i = idx-2; i>=0; i--){
-        path_planned[i] = parent[path_planned[i+1]];
+    // decoding the output and backtracking
+    int8_t temp = END_POINT;
+    while (temp != -1 && idx < 16) {
+        path_planned[idx++] = temp;
+        temp = parent[temp];
     }
+
+    // Reverse path_planned to get the correct path from START_POINT to END_POINT
+    for (uint8_t i = 0; i < idx / 2; i++) {
+        int8_t temp_swap = path_planned[i];
+        path_planned[i] = path_planned[idx - 1 - i];
+        path_planned[idx - 1 - i] = temp_swap;
+    }
+
 
 
     // ##############################################
@@ -211,4 +215,3 @@ int main(int argc, char const *argv[]) {
 
     return 0;
 }
-
